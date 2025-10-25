@@ -1,0 +1,5 @@
+# Dependências
+/node_modules
+
+# Arquivos de ambiente (se você usar .env no futuro)
+.env
