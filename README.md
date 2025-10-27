@@ -11,10 +11,6 @@ jsonwebtoken: Para gerar e verificar tokens de autenticação (JWT).
 
 bcryptjs: Para criptografar e comparar senhas de forma segura.
 
-Pré-requisitos
-Antes de começar, certifique-se de ter o Node.js (versão LTS recomendada) instalado em sua máquina. O NPM (Node Package Manager) é instalado automaticamente com o Node.js.
-
-Você pode verificar suas versões com os comandos:
 
 Bash
 
