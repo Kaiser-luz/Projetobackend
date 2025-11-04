@@ -1,95 +1,92 @@
-<<<<<<< Updated upstream
-# Projetobackend
-=======
 # Jiromso - API de Gestão de Eventos
 
-Esta é uma API RESTful para o projeto "Jiromso - Gestão de Eventos", desenvolvida como parte da avaliação da matéria de Backend.
+API RESTful completa para o projeto "Jiromso - Gestão de Eventos". Este backend, desenvolvido em Node.js e Express, segue o padrão de arquitetura MVC e inclui um sistema de autenticação de usuários baseado em JWT. Os dados são persistidos permanentemente em um banco de dados **SQLite**.
 
-A API permite operações CRUD (Criar, Ler, Atualizar, Deletar) para gerenciar eventos e inclui um sistema de autenticação de usuários baseado em JWT (JSON Web Tokens) para proteger rotas sensíveis.
+## ✨ Funcionalidades Principais
 
-## Funcionalidades
+* **Arquitetura MVC:** Código organizado com separação de responsabilidades (Rotas, Controladores e Models).
+* **Persistência de Dados:** Os dados de usuários e eventos são salvos em um arquivo de banco de dados SQLite (`jiromso.db`). Os dados **não são perdidos** ao reiniciar o servidor.
+* **Autenticação Segura:**
+    * Hashing de senhas com **bcryptjs** no momento do cadastro.
+    * Sistema de login que retorna um **Token JWT** com tempo de expiração.
+* **Rotas Protegidas:** As rotas de criação, atualização e deleção (`POST`, `PUT`, `DELETE`) de eventos são protegidas e só podem ser acessadas com um Token JWT válido.
+* **Pronto para Front-end:** O servidor está configurado com `CORS` para permitir requisições de aplicações web (como o `index.html` fornecido).
 
-* **Autenticação de Usuários:**
-    * `POST /api/usuarios`: Cadastro de novos usuários (com hash de senha usando `bcryptjs`).
-    * `POST /api/usuarios/login`: Login de usuários, retornando um Token JWT.
-* **Gerenciamento de Eventos (CRUD):**
-    * `GET /api/eventos`: Lista todos os eventos (Rota Pública).
-    * `GET /api/eventos/:id`: Busca um evento específico por ID (Rota Pública).
-    * `POST /api/eventos`: Cria um novo evento (Rota Protegida).
-    * `PUT /api/eventos/:id`: Atualiza um evento existente (Rota Protegida).
-    * `DELETE /api/eventos/:id`: Deleta um evento (Rota Protegida).
+## 🚀 Tecnologias Utilizadas
 
-## Tecnologias Utilizadas
-
-* **Node.js:** Ambiente de execução JavaScript no servidor.
-* **Express.js:** Framework para construção da API.
-* **JSON Web Token (jsonwebtoken):** Para geração e verificação de tokens de autenticação.
-* **bcryptjs:** Para criptografia (hashing) de senhas.
+* **Node.js**
+* **Express.js** (Framework do servidor)
+* **SQLite3** (Driver para o banco de dados)
+* **jsonwebtoken** (Autenticação JWT)
+* **bcryptjs** (Hashing de senhas)
+* **cors** (Habilita acesso do front-end)
 
 ---
 
-## Pré-requisitos
+## 📋 Pré-requisitos
 
-Para rodar este projeto, você precisará ter instalado em sua máquina:
+Antes de começar, você precisará ter instalado em sua máquina:
+* [Node.js](https://nodejs.org/) (v16 ou superior)
+* [npm](https://www.npmjs.com/) (geralmente vem com o Node.js)
+* (Opcional) Um cliente de API como [Postman](https://www.postman.com/) ou [Insomnia](https://insomnia.rest/) para testes.
+* (Opcional) Um visualizador de SQLite como o [DB Browser for SQLite](https://sqlitebrowser.org/dl/) para inspecionar o arquivo `jiromso.db`.
 
-* [Node.js](https://nodejs.org/) (que inclui o `npm`).
+---
 
-## Como Instalar e Rodar
+## 🖥️ Instalação e Execução (Backend)
 
-Siga os passos abaixo para executar o projeto localmente.
+Siga os passos para rodar o servidor da API:
 
-### 1. Clone ou Baixe o Repositório
+**1. Clone o Repositório**
+(Se não estiver em um .zip, clone o repositório)
 
-Primeiro, obtenha os arquivos do projeto. Se estiver em um `.zip`, apenas extraia-o.
-
-### 2. Navegue até a Pasta do Projeto
-
-Abra seu terminal (Prompt de Comando, PowerShell, etc.) e navegue até a pasta raiz do projeto:
-
+**2. Navegue até a Pasta do Projeto**
+Abra seu terminal e use o `cd` para entrar na pasta raiz do projeto:
 ```sh
 cd caminho/para/a/pasta/jiromso-gestao-eventos
 ```
 
-### 3. Instale as Dependências
-
-Dentro da pasta raiz do projeto, execute o comando abaixo para instalar todas as bibliotecas necessárias (`express`, `jsonwebtoken`, `bcryptjs`):
-
+**3. Instale as Dependências**
+Execute o comando abaixo para instalar `express`, `sqlite3`, `bcryptjs`, `jsonwebtoken` e `cors`.
 ```sh
 npm install
 ```
 
-### 4. Inicie o Servidor
-
-Após a instalação das dependências, inicie o servidor com o seguinte comando:
-
+**4. Inicie o Servidor**
+Após a instalação, inicie o servidor:
 ```sh
 node src/app.js
 ```
 
-Se tudo ocorrer bem, você verá a seguinte mensagem no terminal:
+O servidor será iniciado. Na primeira execução, ele criará automaticamente o arquivo `jiromso.db` e as tabelas `eventos` e `usuarios`.
 
+O terminal deve exibir:
 ```
+Conectado ao banco de dados SQLite.
 Servidor rodando em http://localhost:3000
-Para parar o servidor, pressione Ctrl+C no terminal.
 ```
+O servidor agora está pronto para receber requisições.
 
 ---
 
-## Como Testar a API (Usando Postman ou Insomnia)
+## 🌐 Executando o Front-end (Opcional)
 
-A API armazena os dados em memória, então os dados serão reiniciados toda vez que o servidor parar.
+Um front-end simples (`index.html`) foi criado para consumir esta API (a rota pública `GET /api/eventos`).
 
-### Fluxo de Teste Completo
-
-O fluxo de teste recomendado é:
-1.  Cadastrar um usuário.
-2.  Fazer login com esse usuário para obter um Token.
-3.  Usar esse Token para criar, atualizar e deletar eventos.
+1.  Certifique-se de que o **Backend está rodando** (Passo anterior).
+2.  Navegue até a pasta `jiromso-frontend` (a pasta que está *ao lado* do backend).
+3.  Abra o arquivo `index.html` diretamente no seu navegador (clique duplo).
+4.  A página carregará e exibirá a lista de eventos salvos no banco de dados.
 
 ---
 
-### Passo 1: Cadastrar um Usuário
+## ⚙️ Guia de Teste da API (Fluxo Completo)
 
+Para testar a segurança e a persistência, siga este fluxo usando o **Postman** ou similar.
+
+### 👤 Autenticação (Usuários)
+
+#### 1. Cadastrar um novo usuário
 * **Método:** `POST`
 * **URL:** `http://localhost:3000/api/usuarios`
 * **Body (raw/JSON):**
@@ -97,89 +94,77 @@ O fluxo de teste recomendado é:
     {
       "nome": "Professor Teste",
       "email": "professor@teste.com",
-      "senha": "senhaforte123"
+      "senha": "senha123"
     }
     ```
-* **Resposta:** `201 Created` com os dados do usuário (sem a senha).
+* **Resposta (Sucesso):** `201 Created`
 
----
-
-### Passo 2: Fazer Login (Obter o Token)
-
+#### 2. Fazer Login (Obter Token)
 * **Método:** `POST`
 * **URL:** `http://localhost:3000/api/usuarios/login`
 * **Body (raw/JSON):**
     ```json
     {
       "email": "professor@teste.com",
-      "senha": "senhaforte123"
+      "senha": "senha123"
     }
     ```
-* **Resposta:** `200 OK` com a mensagem de sucesso e o **Token JWT**.
+* **Resposta (Sucesso):** `200 OK`. Copie o `token` da resposta.
     ```json
     {
       "message": "Login bem-sucedido!",
       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     }
     ```
-* **Ação:** **Copie o `token`** para usar nos próximos passos.
 
 ---
 
-### Passo 3: Criar um Evento 
+### 📅 Gerenciamento de Eventos (Testando o CRUD)
 
+#### 1. Criar um novo evento (Rota Protegida)
 * **Método:** `POST`
 * **URL:** `http://localhost:3000/api/eventos`
 * **Autorização:**
-    * Tipo: **Bearer Token**
-    * Cole o `token` obtido no Passo 2.
+    * Selecione a aba `Authorization`
+    * Tipo: `Bearer Token`
+    * Cole o `token` obtido no login.
 * **Body (raw/JSON):**
     ```json
     {
-        "nome": "Evento de Teste",
-        "data": "2025-12-01",
-        "localizacao": "Laboratório C1",
-        "descricao": "Teste da API de eventos."
+        "nome": "Evento Salvo no Banco",
+        "data": "2025-11-10",
+        "localizacao": "Auditório",
+        "descricao": "Este evento agora é permanente."
     }
     ```
-* **Resposta:** `201 Created` com os dados do evento criado. (Ex: ID 2).
+* **Resposta (Sucesso):** `201 Created`.
 
----
-
-### Passo 4: Atualizar um Evento (Rota Protegida)
-
-* **Método:** `PUT`
-* **URL:** `http://localhost:3000/api/eventos/[ID_DO_EVENTO]` (Ex: `http://localhost:3000/api/eventos/4`)
-* **Autorização:**
-    * Tipo: **Bearer Token**
-    * Cole o mesmo `token`.
-* **Body (raw/JSON):** 
-    ```json
-    {
-        "nome": "Evento ATUALIZADO",
-        "localizacao": "Auditório Principal"
-    }
-    ```
-* **Resposta:** `200 OK` com o objeto do evento atualizado.
-
----
-
-### Passo 5: Deletar um Evento (Rota Protegida)
-
-* **Método:** `DELETE`
-* **URL:** `http://localhost:3000/api/eventos/[ID_DO_EVENTO]` (Ex: `http://localhost:3000/api/eventos/4`)
-* **Autorização:**
-    * Tipo: **Bearer Token**
-    * Cole o mesmo `token`.
-* **Resposta:** `204 No Content`. A resposta virá vazia, indicando sucesso na deleção.
-
----
-
-### Teste (Rotas Públicas)
-
-A qualquer momento, você pode verificar a lista de eventos sem precisar de token:
-
+#### 2. Listar todos os eventos (Rota Pública)
 * **Método:** `GET`
 * **URL:** `http://localhost:3000/api/eventos`
-* **Resposta:** `200 OK` com a lista de todos os eventos atualmente em memória.
->>>>>>> Stashed changes
+* **Nota:** Você verá o evento que acabou de criar (Ex: com `id: 1`).
+
+#### 3. Teste de Persistência (O Teste Principal)
+1.  No terminal, **pare o servidor** (pressione `Ctrl+C`).
+2.  **Reinicie o servidor** (`node src/app.js`).
+3.  No Postman, execute o **`GET /api/eventos`** novamente.
+4.  **Resultado:** O "Evento Salvo no Banco" (`id: 1`) **ainda estará lá**, provando que os dados foram persistidos no arquivo `jiromso.db`.
+
+#### 4. Atualizar um evento (Rota Protegida)
+* **Método:** `PUT`
+* **URL:** `http://localhost:3000/api/eventos/1` (use o ID do evento que você criou)
+* **Autorização:** Use o mesmo `Bearer Token`.
+* **Body (raw/JSON):**
+    ```json
+    {
+        "nome": "Evento ATUALIZADO no Banco",
+        "localizacao": "Sala 102"
+    }
+    ```
+* **Resposta (Sucesso):** `200 OK`.
+
+#### 5. Deletar um evento (Rota Protegida)
+* **Método:** `DELETE`
+* **URL:** `http://localhost:3000/api/eventos/1` (use o ID do evento)
+* **Autorização:** Use o mesmo `Bearer Token`.
+* **Resposta (Sucesso):** `204 No Content` (sem corpo de resposta).
