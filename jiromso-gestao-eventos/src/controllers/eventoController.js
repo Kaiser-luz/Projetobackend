@@ -1,66 +1,87 @@
-// Nosso "banco de dados" em memória.
-// Em uma aplicação real, isso viria de um banco de dados como SQL ou MongoDB.
-let eventos = [
-  { id: 1, nome: 'Lançamento de Produto Tech', data: '2025-11-20', localizacao: 'Centro de Convenções', descricao: 'Apresentação do novo gadget da nossa marca.' },
-  { id: 2, nome: 'Conferência Anual de Desenvolvedores', data: '2026-01-15', localizacao: 'Teatro Principal', descricao: 'Palestras e workshops sobre as novas tecnologias.' },
-  { id: 3, nome: 'Workshop de Marketing Digital', data: '2025-12-05', localizacao: 'Coworking Central', descricao: 'Aprenda as melhores estratégias de marketing.' }
-];
-let nextId = 4;
+const eventoModel = require('../models/eventoModel');
 
-// LISTAR TODOS os eventos (GET)
-exports.listarTodos = (req, res) => {
-  res.json(eventos);
-};
-
-// BUSCAR UM evento por ID (GET)
-exports.buscarPorId = (req, res) => {
-  const idEvento = parseInt(req.params.id);
-  const eventoEncontrado = eventos.find(e => e.id === idEvento);
-  if (eventoEncontrado) {
-    res.json(eventoEncontrado);
-  } else {
-    res.status(404).json({ message: 'Evento não encontrado.' });
+// LISTAR TODOS (GET)
+exports.listarTodos = async (req, res) => {
+  try {
+    const eventos = await eventoModel.findAll();
+    res.json(eventos);
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor ao buscar eventos." });
   }
 };
 
-// CRIAR um novo evento (POST)
-exports.criar = (req, res) => {
+// BUSCAR POR ID (GET)
+exports.buscarPorId = async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const evento = await eventoModel.findById(id);
+    if (evento) {
+      res.json(evento);
+    } else {
+      res.status(404).json({ message: 'Evento não encontrado.' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor." });
+  }
+};
+
+// CRIAR (POST)
+exports.criar = async (req, res) => {
   const { nome, data, localizacao, descricao } = req.body;
   if (!nome || !data || !localizacao) {
     return res.status(400).json({ message: 'Nome, data e localização são obrigatórios.' });
   }
-  const novoEvento = { id: nextId++, nome, data, localizacao, descricao: descricao || '' };
-  eventos.push(novoEvento);
-  res.status(201).json(novoEvento);
-};
 
-// ATUALIZAR um evento existente (PUT)
-exports.atualizar = (req, res) => {
-  const id = parseInt(req.params.id);
-  const eventoIndex = eventos.findIndex(e => e.id === id);
-  if (eventoIndex !== -1) {
-    const { nome, data, localizacao, descricao } = req.body;
-    eventos[eventoIndex] = { 
-        ...eventos[eventoIndex], 
-        nome: nome || eventos[eventoIndex].nome, 
-        data: data || eventos[eventoIndex].data,
-        localizacao: localizacao || eventos[eventoIndex].localizacao,
-        descricao: descricao !== undefined ? descricao : eventos[eventoIndex].descricao
-    };
-    res.json(eventos[eventoIndex]);
-  } else {
-    res.status(404).json({ message: 'Evento não encontrado para atualização.' });
+  try {
+    const novoEvento = await eventoModel.create({ nome, data, localizacao, descricao });
+    res.status(201).json(novoEvento);
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor ao criar evento." });
   }
 };
 
-// DELETAR um evento (DELETE)
-exports.deletar = (req, res) => {
+// ATUALIZAR (PUT)
+exports.atualizar = async (req, res) => {
   const id = parseInt(req.params.id);
-  const initialLength = eventos.length;
-  eventos = eventos.filter(e => e.id !== id);
-  if (eventos.length < initialLength) {
-    res.status(204).send(); // 204 No Content
-  } else {
-    res.status(404).json({ message: 'Evento não encontrado para exclusão.' });
+  const { nome, data, localizacao, descricao } = req.body;
+
+  // Lógica para buscar o evento atual e mesclar os dados
+  try {
+    const eventoAtual = await eventoModel.findById(id);
+    if (!eventoAtual) {
+      return res.status(404).json({ message: 'Evento não encontrado para atualização.' });
+    }
+
+    // Mescla dados: usa o novo valor se fornecido, senão mantém o antigo
+    const dadosAtualizados = {
+      nome: nome || eventoAtual.nome,
+      data: data || eventoAtual.data,
+      localizacao: localizacao || eventoAtual.localizacao,
+      descricao: descricao !== undefined ? descricao : eventoAtual.descricao
+    };
+
+    const result = await eventoModel.update(id, dadosAtualizados);
+    if (result.changes > 0) {
+      res.json({ id, ...dadosAtualizados });
+    } else {
+      res.status(404).json({ message: 'Evento não encontrado para atualização.' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor ao atualizar evento." });
+  }
+};
+
+// DELETAR (DELETE)
+exports.deletar = async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const result = await eventoModel.delete(id);
+    if (result.changes > 0) {
+      res.status(204).send(); // Sucesso, sem conteúdo
+    } else {
+      res.status(404).json({ message: 'Evento não encontrado para exclusão.' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor ao deletar evento." });
   }
 };

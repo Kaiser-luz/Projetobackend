@@ -1,63 +1,75 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const usuarioModel = require('../models/usuarioModel');
 
-// IMPORTANTE: Em um projeto real, este segredo deve vir de um arquivo .env!
+// O segredo deve estar em um .env, mas por enquanto:
 const JWT_SECRET = 'seu-segredo-super-secreto-e-dificil-de-adivinhar';
 
-// Nosso "banco de dados" de usuários em memória
-let usuarios = [];
-let nextUserId = 1;
-
 // Função para CRIAR um novo usuário (Cadastro)
-exports.criarUsuario = (req, res) => {
+exports.criarUsuario = async (req, res) => {
   const { nome, email, senha } = req.body;
 
   if (!nome || !email || !senha) {
-    return res.status(400).json({ message: "Nome, email e senha são obrigatórios."});
-  }
-  if (usuarios.find(u => u.email === email)) {
-    return res.status(400).json({ message: "Email já cadastrado." });
+    return res.status(400).json({ message: "Nome, email e senha são obrigatórios." });
   }
 
-  // Criptografa a senha ANTES de salvar (10 é o custo do hash)
-  const senhaCriptografada = bcrypt.hashSync(senha, 10);
+  try {
+    // Verifica se o email já existe no banco
+    const usuarioExistente = await usuarioModel.findByEmail(email);
+    if (usuarioExistente) {
+      return res.status(400).json({ message: "Email já cadastrado." });
+    }
 
-  const novoUsuario = {
-    id: nextUserId++,
-    nome,
-    email,
-    senha: senhaCriptografada
-  };
-  usuarios.push(novoUsuario);
+    // Criptografa a senha
+    const senhaCriptografada = bcrypt.hashSync(senha, 10);
 
-  // Nunca retorne a senha na resposta!
-  const { senha: _, ...usuarioSemSenha } = novoUsuario;
-  res.status(201).json(usuarioSemSenha);
+    // Salva no banco
+    const novoUsuario = await usuarioModel.create({
+      nome,
+      email,
+      senha: senhaCriptografada
+    });
+
+    // Não retornamos a senha na resposta
+    const { senha: _, ...usuarioSemSenha } = novoUsuario;
+    res.status(201).json(usuarioSemSenha);
+
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor ao criar usuário." });
+  }
 };
 
 // Função de LOGIN
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   const { email, senha } = req.body;
 
-  const usuario = usuarios.find(u => u.email === email);
-  if (!usuario) {
-    return res.status(401).json({ message: "Credenciais inválidas." });
+  try {
+    // 1. Encontrar o usuário pelo email no banco
+    const usuario = await usuarioModel.findByEmail(email);
+    if (!usuario) {
+      return res.status(401).json({ message: "Credenciais inválidas." });
+    }
+
+    // 2. Comparar a senha enviada com a senha criptografada no banco
+    const senhaValida = bcrypt.compareSync(senha, usuario.senha);
+    if (!senhaValida) {
+      return res.status(401).json({ message: "Credenciais inválidas." });
+    }
+
+    // 3. Gerar o Token JWT
+    const token = jwt.sign(
+      { id: usuario.id, nome: usuario.nome }, // Payload
+      JWT_SECRET,
+      { expiresIn: '1h' } // Expira em 1 hora
+    );
+
+    // 4. Enviar o token
+    res.status(200).json({
+      message: "Login bem-sucedido!",
+      token: token
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: "Erro no servidor ao fazer login." });
   }
-
-  const senhaValida = bcrypt.compareSync(senha, usuario.senha);
-  if (!senhaValida) {
-    return res.status(401).json({ message: "Credenciais inválidas." });
-  }
-
-  // Se as credenciais são válidas, gera o Token JWT
-  const token = jwt.sign(
-    { id: usuario.id, nome: usuario.nome }, // Payload: dados que queremos guardar no token
-    JWT_SECRET,
-    { expiresIn: '1h' } // Token expira em 1 hora
-  );
-
-  res.status(200).json({
-    message: "Login bem-sucedido!",
-    token: token
-  });
 };
