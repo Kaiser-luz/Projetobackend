@@ -1,92 +1,95 @@
 # Jiromso - API de Gestão de Eventos
 
-API RESTful completa para o projeto "Jiromso - Gestão de Eventos". Este backend, desenvolvido em Node.js e Express, segue o padrão de arquitetura MVC e inclui um sistema de autenticação de usuários baseado em JWT. Os dados são persistidos permanentemente em um banco de dados **SQLite**.
+API RESTful completa para o projeto "Jiromso - Gestão de Eventos". Este backend, desenvolvido em Node.js e Express, segue o padrão de arquitetura MVC e inclui um sistema de autenticação de usuários baseado em JWT.
+
+Diferente de versões anteriores, este projeto agora implementa **persistência de dados permanente** com **SQLite** e possui uma suíte de **testes automatizados** com **Jest** e **Supertest**.
 
 ## ✨ Funcionalidades Principais
 
 * **Arquitetura MVC:** Código organizado com separação de responsabilidades (Rotas, Controladores e Models).
-* **Persistência de Dados:** Os dados de usuários e eventos são salvos em um arquivo de banco de dados SQLite (`jiromso.db`). Os dados **não são perdidos** ao reiniciar o servidor.
-* **Autenticação Segura:**
+* **Persistência de Dados (SQLite):** Os dados de usuários e eventos são salvos permanentemente no arquivo `jiromso.db`. Os dados **não são perdidos** ao reiniciar o servidor.
+* **Autenticação Segura (JWT):**
     * Hashing de senhas com **bcryptjs** no momento do cadastro.
-    * Sistema de login que retorna um **Token JWT** com tempo de expiração.
-* **Rotas Protegidas:** As rotas de criação, atualização e deleção (`POST`, `PUT`, `DELETE`) de eventos são protegidas e só podem ser acessadas com um Token JWT válido.
-* **Pronto para Front-end:** O servidor está configurado com `CORS` para permitir requisições de aplicações web (como o `index.html` fornecido).
+    * Sistema de login que retorna um Token JWT com tempo de expiração.
+* **Rotas Protegidas:** Rotas de `POST`, `PUT`, `DELETE` de eventos são protegidas e só podem ser acessadas com um Token JWT válido.
+* **Testes Automatizados (TDD):**
+    * O projeto é configurado com **Jest** e **Supertest**.
+    * Testes de integração "mockam" (simulam) o banco de dados para velocidade e isolamento.
+    * Testes unitários validam a lógica dos controladores.
+* **Pronto para Front-end:** O servidor está configurado com `CORS` para permitir requisições de aplicações web.
 
 ## 🚀 Tecnologias Utilizadas
 
-* **Node.js**
-* **Express.js** (Framework do servidor)
-* **SQLite3** (Driver para o banco de dados)
+* **Node.js** / **Express.js** (Servidor)
+* **SQLite3** (Banco de Dados)
 * **jsonwebtoken** (Autenticação JWT)
 * **bcryptjs** (Hashing de senhas)
 * **cors** (Habilita acesso do front-end)
+* **Jest** (Framework de Testes)
+* **Supertest** (Testes de API HTTP)
+* **Nodemon** (Desenvolvimento)
 
 ---
 
-## 📋 Pré-requisitos
+## 🖥️ Instalação e Execução
 
-Antes de começar, você precisará ter instalado em sua máquina:
+Siga os passos para rodar o projeto localmente.
+
+### 1. Pré-requisitos
+
 * [Node.js](https://nodejs.org/) (v16 ou superior)
 * [npm](https://www.npmjs.com/) (geralmente vem com o Node.js)
-* (Opcional) Um cliente de API como [Postman](https://www.postman.com/) ou [Insomnia](https://insomnia.rest/) para testes.
-* (Opcional) Um visualizador de SQLite como o [DB Browser for SQLite](https://sqlitebrowser.org/dl/) para inspecionar o arquivo `jiromso.db`.
 
----
+### 2. Instalação
 
-## 🖥️ Instalação e Execução (Backend)
+Navegue até a pasta raiz do projeto (`jiromso-gestao-eventos`) e execute o comando abaixo. Ele instalará **todas** as dependências necessárias, incluindo as de desenvolvimento (`jest`, `nodemon`, etc.).
 
-Siga os passos para rodar o servidor da API:
-
-**1. Clone o Repositório**
-(Se não estiver em um .zip, clone o repositório)
-
-**2. Navegue até a Pasta do Projeto**
-Abra seu terminal e use o `cd` para entrar na pasta raiz do projeto:
-```sh
-cd caminho/para/a/pasta/jiromso-gestao-eventos
-```
-
-**3. Instale as Dependências**
-Execute o comando abaixo para instalar `express`, `sqlite3`, `bcryptjs`, `jsonwebtoken` e `cors`.
 ```sh
 npm install
 ```
 
-**4. Inicie o Servidor**
-Após a instalação, inicie o servidor:
+### 3. Executando o Servidor
+
+Após a instalação, você pode iniciar o servidor de duas formas:
+
+**A) Modo de Produção (Recomendado para testes simples):**
+
 ```sh
-node src/app.js
+node server.js
 ```
 
-O servidor será iniciado. Na primeira execução, ele criará automaticamente o arquivo `jiromso.db` e as tabelas `eventos` e `usuarios`.
+**B) Modo de Desenvolvimento (com Nodemon):**
+Este modo reinicia o servidor automaticamente a cada mudança nos arquivos `.js`.
 
-O terminal deve exibir:
+```sh
+npm run dev
 ```
-Conectado ao banco de dados SQLite.
-Servidor rodando em http://localhost:3000
-```
-O servidor agora está pronto para receber requisições.
+
+Ao iniciar, o servidor criará automaticamente o arquivo `jiromso.db` (caso não exista) e exibirá a mensagem:
+`Conectado ao banco de dados SQLite.`
+`Servidor rodando em http://localhost:3000`
 
 ---
 
-## 🌐 Executando o Front-end (Opcional)
+## 🧪 Como Rodar os Testes Automatizados
 
-Um front-end simples (`index.html`) foi criado para consumir esta API (a rota pública `GET /api/eventos`).
+Configuramos uma suíte de testes com Jest para garantir a qualidade do código. Os testes **não tocam no banco de dados real**; eles usam "mocks" para simular o `eventoModel`.
 
-1.  Certifique-se de que o **Backend está rodando** (Passo anterior).
-2.  Navegue até a pasta `jiromso-frontend` (a pasta que está *ao lado* do backend).
-3.  Abra o arquivo `index.html` diretamente no seu navegador (clique duplo).
-4.  A página carregará e exibirá a lista de eventos salvos no banco de dados.
+Para executar todos os testes (unitários e de integração), rode:
+
+```sh
+npm test
+```
+
+Você verá um relatório detalhado de todos os testes passando, incluindo a verificação das rotas, a lógica dos controladores e a segurança das rotas protegidas.
 
 ---
 
-## ⚙️ Guia de Teste da API (Fluxo Completo)
+## ⚙️ Guia de Teste Manual (Postman)
 
-Para testar a segurança e a persistência, siga este fluxo usando o **Postman** ou similar.
+Para testar manualmente a API e a persistência de dados.
 
-### 👤 Autenticação (Usuários)
-
-#### 1. Cadastrar um novo usuário
+### 1. Cadastrar um Usuário
 * **Método:** `POST`
 * **URL:** `http://localhost:3000/api/usuarios`
 * **Body (raw/JSON):**
@@ -97,9 +100,8 @@ Para testar a segurança e a persistência, siga este fluxo usando o **Postman**
       "senha": "senha123"
     }
     ```
-* **Resposta (Sucesso):** `201 Created`
 
-#### 2. Fazer Login (Obter Token)
+### 2. Fazer Login (Obter Token)
 * **Método:** `POST`
 * **URL:** `http://localhost:3000/api/usuarios/login`
 * **Body (raw/JSON):**
@@ -109,23 +111,12 @@ Para testar a segurança e a persistência, siga este fluxo usando o **Postman**
       "senha": "senha123"
     }
     ```
-* **Resposta (Sucesso):** `200 OK`. Copie o `token` da resposta.
-    ```json
-    {
-      "message": "Login bem-sucedido!",
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    }
-    ```
+* **Ação:** Copie o `token` da resposta.
 
----
-
-### 📅 Gerenciamento de Eventos (Testando o CRUD)
-
-#### 1. Criar um novo evento (Rota Protegida)
+### 3. Criar um Evento (Rota Protegida)
 * **Método:** `POST`
 * **URL:** `http://localhost:3000/api/eventos`
 * **Autorização:**
-    * Selecione a aba `Authorization`
     * Tipo: `Bearer Token`
     * Cole o `token` obtido no login.
 * **Body (raw/JSON):**
@@ -133,38 +124,23 @@ Para testar a segurança e a persistência, siga este fluxo usando o **Postman**
     {
         "nome": "Evento Salvo no Banco",
         "data": "2025-11-10",
-        "localizacao": "Auditório",
-        "descricao": "Este evento agora é permanente."
+        "localizacao": "Auditório"
     }
     ```
-* **Resposta (Sucesso):** `201 Created`.
 
-#### 2. Listar todos os eventos (Rota Pública)
+### 4. Listar Eventos (Rota Pública)
 * **Método:** `GET`
 * **URL:** `http://localhost:3000/api/eventos`
-* **Nota:** Você verá o evento que acabou de criar (Ex: com `id: 1`).
+* **Resultado:** Você verá o "Evento Salvo no Banco" na lista.
 
-#### 3. Teste de Persistência (O Teste Principal)
-1.  No terminal, **pare o servidor** (pressione `Ctrl+C`).
-2.  **Reinicie o servidor** (`node src/app.js`).
+### 5. Teste de Persistência (O Teste Principal)
+1.  No terminal, **pare o servidor** (`Ctrl+C`).
+2.  **Reinicie o servidor** (`npm run dev` ou `node server.js`).
 3.  No Postman, execute o **`GET /api/eventos`** novamente.
-4.  **Resultado:** O "Evento Salvo no Banco" (`id: 1`) **ainda estará lá**, provando que os dados foram persistidos no arquivo `jiromso.db`.
+4.  **Resultado:** O evento **ainda estará lá**, provando que foi salvo no arquivo `jiromso.db`.
 
-#### 4. Atualizar um evento (Rota Protegida)
-* **Método:** `PUT`
+### 6. Deletar um Evento (Rota Protegida)
+* **Método:** `DELETE`
 * **URL:** `http://localhost:3000/api/eventos/1` (use o ID do evento que você criou)
 * **Autorização:** Use o mesmo `Bearer Token`.
-* **Body (raw/JSON):**
-    ```json
-    {
-        "nome": "Evento ATUALIZADO no Banco",
-        "localizacao": "Sala 102"
-    }
-    ```
-* **Resposta (Sucesso):** `200 OK`.
-
-#### 5. Deletar um evento (Rota Protegida)
-* **Método:** `DELETE`
-* **URL:** `http://localhost:3000/api/eventos/1` (use o ID do evento)
-* **Autorização:** Use o mesmo `Bearer Token`.
-* **Resposta (Sucesso):** `204 No Content` (sem corpo de resposta).
+* **Resposta (Sucesso):** `204 No Content`.
