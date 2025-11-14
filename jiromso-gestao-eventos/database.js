@@ -6,9 +6,10 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
         console.error(err.message);
         throw err;
     } else {
-        console.log('Conectado ao banco de dados SQLite.');
+        if (process.env.NODE_ENV !== 'test') {
+            console.log('Conectado ao banco de dados SQLite.');
+        }
 
-        // Criar tabela 'eventos'
         db.run(`CREATE TABLE IF NOT EXISTS eventos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
@@ -21,7 +22,6 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
             }
         });
 
-        // Criar tabela 'usuarios'
         db.run(`CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
