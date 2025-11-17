@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jiromso Eventos - Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .auth-section, .event-form-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .auth-section h2, .event-form-section h2 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.danger {
+            background-color: #dc3545;
+        }
+        button.danger:hover {
+            background-color: #c82333;
+        }
+        button.success {
+            background-color: #28a745;
+        }
+        button.success:hover {
+            background-color: #218838;
+        }
+        #lista-eventos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .evento {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .evento h2 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .evento p {
+            margin-bottom: 5px;
+        }
+        .evento .acoes {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        #auth-status {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #e2f0fb;
+            border-left: 5px solid #007bff;
+            color: #007bff;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Jiromso Eventos - Frontend</h1>
+        <p>Gerencie seus eventos de forma eficiente.</p>
+
+        <div id="auth-status">
+            Você não está logado.
+        </div>
+
+        <div class="auth-section">
+            <h2 id="auth-title">Faça Login ou Cadastre-se</h2>
+            <div id="auth-error" class="error-message"></div>
+            <input type="text" id="auth-nome" placeholder="Seu Nome (apenas para cadastro)">
+            <input type="email" id="auth-email" placeholder="Seu Email" required>
+            <input type="password" id="auth-senha" placeholder="Sua Senha" required>
+            <button onclick="fazerLogin()">Login</button>
+            <button onclick="fazerCadastro()">Cadastrar</button>
+            <button class="danger" onclick="fazerLogout()" style="display: none;" id="logout-button">Logout</button>
+        </div>
+
+        <div class="event-form-section" style="display: none;" id="event-management-section">
+            <h2>Gerenciar Eventos</h2>
+            <div id="event-form-error" class="error-message"></div>
+            <input type="text" id="event-id" style="display: none;">
+            <input type="text" id="event-nome" placeholder="Nome do Evento" required>
+            <input type="date" id="event-data" placeholder="Data (AAAA-MM-DD)" required>
+            <input type="text" id="event-localizacao" placeholder="Localização" required>
+            <textarea id="event-descricao" placeholder="Descrição (opcional)"></textarea>
+            <button onclick="salvarEvento()" id="save-event-button">Criar Evento</button>
+            <button onclick="cancelarEdicao()" id="cancel-edit-button" style="display: none;">Cancelar Edição</button>
+        </div>
+
+        <h2>Lista de Eventos</h2>
+        <div id="lista-eventos">
+            <p>Carregando eventos...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api'; 
+        const AUTH_TOKEN_KEY = 'authToken'; 
+
+        let currentAuthToken = localStorage.getItem(AUTH_TOKEN_KEY); // Tenta carregar token ao iniciar
+
+        // --- Funções de Utilitário ---
+        function getAuthHeaders() {
+            if (currentAuthToken) {
+                return {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                };
+            }
+            return { 'Content-Type': 'application/json' };
+        }
+
+        function displayMessage(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.color = isError ? '#dc3545' : '#28a745';
+            setTimeout(() => element.textContent = '', 5000); // Limpa a msg dps de 5s
+        }
+
+        // --- Gerenciamento de Autenticação ---
+        function updateAuthUI() {
+            const authStatusDiv = document.getElementById('auth-status');
+            const authTitle = document.getElementById('auth-title');
+            const authNomeInput = document.getElementById('auth-nome');
+            const logoutButton = document.getElementById('logout-button');
+            const eventManagementSection = document.getElementById('event-management-section');
+
+            if (currentAuthToken) {
+                authStatusDiv.innerHTML = `Você está logado. <button class="danger" onclick="fazerLogout()">Logout</button>`;
+                authTitle.textContent = 'Você está logado!';
+                authNomeInput.style.display = 'none'; // Nome não é necessário após login
+                logoutButton.style.display = 'inline-block';
+                eventManagementSection.style.display = 'block'; // Mostra gestão de eventos
+            } else {
+                authStatusDiv.textContent = 'Você não está logado.';
+                authTitle.textContent = 'Faça Login ou Cadastre-se';
+                authNomeInput.style.display = 'block';
+                logoutButton.style.display = 'none';
+                eventManagementSection.style.display = 'none'; // Esconde gestão de eventos
+            }
+            carregarEventos(); // Recarrega eventos para mostrar/esconder botões de edição
+        }
+
+        async function fazerLogin() {
+            const email = document.getElementById('auth-email').value;
+            const senha = document.getElementById('auth-senha').value;
+            const authErrorDiv = document.getElementById('auth-error');
+            authErrorDiv.textContent = ''; // Limpa erros anteriores
+
+            if (!email || !senha) {
+                authErrorDiv.textContent = 'Email e senha são obrigatórios para login.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/usuarios/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao fazer login.');
+                }
+
+                const data = await response.json();
+                currentAuthToken = data.token;
+                localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+                updateAuthUI();
+                displayMessage('auth-error', 'Login bem-sucedido!', false);
+                document.getElementById('auth-email').value = ''; // Limpa campos
+                document.getElementById('auth-senha').value = '';
+                document.getElementById('auth-nome').value = '';
+            } catch (error) {
+                authErrorDiv.textContent = error.message;
+                console.error('Erro de login:', error);
+            }
+        }
+
+        async function fazerCadastro() {
+            const nome = document.getElementById('auth-nome').value;
+            const email = document.getElementById('auth-email').value;
+            const senha = document.getElementById('auth-senha').value;
+            const authErrorDiv = document.getElementById('auth-error');
+            authErrorDiv.textContent = ''; // Limpa erros anteriores
+
+            if (!nome || !email || !senha) {
+                authErrorDiv.textContent = 'Nome, email e senha são obrigatórios para cadastro.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/usuarios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, senha })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao cadastrar usuário.');
+                }
+
+                displayMessage('auth-error', 'Cadastro realizado com sucesso! Agora faça login.', false);
+                // Após o cadastro, o usuário deve fazer login
+                document.getElementById('auth-nome').value = '';
+                document.getElementById('auth-email').value = email; // Preenche email para login
+                document.getElementById('auth-senha').value = '';
+            } catch (error) {
+                authErrorDiv.textContent = error.message;
+                console.error('Erro de cadastro:', error);
+            }
+        }
+
+        function fazerLogout() {
+            currentAuthToken = null;
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            updateAuthUI();
+            displayMessage('auth-status', 'Logout realizado com sucesso!', false);
+        }
+
+        // --- Gerenciamento de Eventos (CRUD) ---
+        async function carregarEventos() {
+            const listaDiv = document.getElementById('lista-eventos');
+            listaDiv.innerHTML = '<p>Carregando eventos...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/eventos`);
+                if (!response.ok) {
+                    throw new Error(`Erro na API: ${response.statusText}`);
+                }
+                const eventos = await response.json();
+                
+                listaDiv.innerHTML = '';
+                if (eventos.length === 0) {
+                    listaDiv.innerHTML = '<p>Nenhum evento cadastrado no momento.</p>';
+                    return;
+                }
+                
+                eventos.forEach(evento => {
+                    const eventoDiv = document.createElement('div');
+                    eventoDiv.className = 'evento';
+                    
+                    let acoesHtml = '';
+                    if (currentAuthToken) { // Só mostra botões se estiver logado
+                        acoesHtml = `
+                            <div class="acoes">
+                                <button class="success" onclick="editarEvento(${evento.id})">Editar</button>
+                                <button class="danger" onclick="deletarEvento(${evento.id})">Deletar</button>
+                            </div>
+                        `;
+                    }
+
+                    eventoDiv.innerHTML = `
+                        <h2>${evento.nome} (ID: ${evento.id})</h2>
+                        <p><strong>Data:</strong> ${evento.data}</p>
+                        <p><strong>Local:</strong> ${evento.localizacao}</p>
+                        <p><strong>Descrição:</strong> ${evento.descricao || 'N/A'}</p>
+                        ${acoesHtml}
+                    `;
+                    
+                    listaDiv.appendChild(eventoDiv);
+                });
+
+            } catch (error) {
+                console.error('Falha ao carregar eventos:', error);
+                listaDiv.innerHTML = `<p style="color: red;">Erro ao carregar eventos. Verifique se o servidor backend está rodando em ${API_URL}.</p>`;
+            }
+        }
+
+        async function salvarEvento() {
+            const eventId = document.getElementById('event-id').value;
+            const nome = document.getElementById('event-nome').value;
+            const data = document.getElementById('event-data').value;
+            const localizacao = document.getElementById('event-localizacao').value;
+            const descricao = document.getElementById('event-descricao').value;
+            const eventFormErrorDiv = document.getElementById('event-form-error');
+            eventFormErrorDiv.textContent = '';
+
+            if (!nome || !data || !localizacao) {
+                eventFormErrorDiv.textContent = 'Nome, Data e Localização são obrigatórios.';
+                return;
+            }
+            if (!currentAuthToken) {
+                eventFormErrorDiv.textContent = 'Você precisa estar logado para gerenciar eventos.';
+                return;
+            }
+
+            const method = eventId ? 'PUT' : 'POST';
+            const url = eventId ? `${API_URL}/eventos/${eventId}` : `${API_URL}/eventos`;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ nome, data, localizacao, descricao })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erro ao ${eventId ? 'atualizar' : 'criar'} evento.`);
+                }
+
+                displayMessage('event-form-error', `Evento ${eventId ? 'atualizado' : 'criado'} com sucesso!`, false);
+                limparFormularioEventos();
+                carregarEventos(); // Recarrega a lista
+                document.getElementById('save-event-button').textContent = 'Criar Evento';
+                document.getElementById('cancel-edit-button').style.display = 'none';
+            } catch (error) {
+                eventFormErrorDiv.textContent = error.message;
+                console.error('Erro ao salvar evento:', error);
+            }
+        }
+
+        async function editarEvento(id) {
+            if (!currentAuthToken) return; // Não faz nada se não estiver logado
+
+            try {
+                const response = await fetch(`${API_URL}/eventos/${id}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao buscar evento para edição.');
+                }
+                const evento = await response.json();
+                
+                // Preenche o formulário com os dados do evento
+                document.getElementById('event-id').value = evento.id;
+                document.getElementById('event-nome').value = evento.nome;
+                document.getElementById('event-data').value = evento.data;
+                document.getElementById('event-localizacao').value = evento.localizacao;
+                document.getElementById('event-descricao').value = evento.descricao || '';
+                
+                document.getElementById('save-event-button').textContent = 'Atualizar Evento';
+                document.getElementById('cancel-edit-button').style.display = 'inline-block';
+                window.scrollTo(0, document.getElementById('event-management-section').offsetTop); // Scroll para o form
+            } catch (error) {
+                displayMessage('event-form-error', error.message, true);
+                console.error('Erro ao buscar evento para edição:', error);
+            }
+        }
+
+        async function deletarEvento(id) {
+            if (!currentAuthToken || !confirm('Tem certeza que deseja deletar este evento?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/eventos/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao deletar evento.');
+                }
+
+                displayMessage('event-form-error', 'Evento deletado com sucesso!', false);
+                carregarEventos(); // Recarrega a lista
+            } catch (error) {
+                displayMessage('event-form-error', error.message, true);
+                console.error('Erro ao deletar evento:', error);
+            }
+        }
+
+        function limparFormularioEventos() {
+            document.getElementById('event-id').value = '';
+            document.getElementById('event-nome').value = '';
+            document.getElementById('event-data').value = '';
+            document.getElementById('event-localizacao').value = '';
+            document.getElementById('event-descricao').value = '';
+        }
+
+        function cancelarEdicao() {
+            limparFormularioEventos();
+            document.getElementById('save-event-button').textContent = 'Criar Evento';
+            document.getElementById('cancel-edit-button').style.display = 'none';
+        }
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateAuthUI(); // Atualiza a UI baseada no token existente
+            carregarEventos();
+        });
+    </script>
+
+</body>
+</html>
