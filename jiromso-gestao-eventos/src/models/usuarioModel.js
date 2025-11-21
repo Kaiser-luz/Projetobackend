@@ -1,19 +1,17 @@
 const db = require('../../database.js');
 
 const usuarioModel = {
-    // Método para criar um novo usuário
     create: (usuario) => {
-        const { nome, email, senha } = usuario;
+        const { nome, email, senha, role } = usuario;
         return new Promise((resolve, reject) => {
-            db.run("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)",
-                [nome, email, senha], function (err) {
+            db.run("INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)",
+                [nome, email, senha, role || 'user'], function (err) {
                     if (err) reject(err);
-                    resolve({ id: this.lastID, nome, email });
+                    resolve({ id: this.lastID, nome, email, role });
                 });
         });
     },
 
-    // Método para buscar um usuário por email (para login e verificação)
     findByEmail: (email) => {
         return new Promise((resolve, reject) => {
             db.get("SELECT * FROM usuarios WHERE email = ?", [email], (err, row) => {

@@ -1,441 +1,387 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jiromso Eventos - Frontend</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .container {
-            max-width: 900px;
-            margin: 20px auto;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .auth-section, .event-form-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .auth-section h2, .event-form-section h2 {
-            margin-top: 0;
-            color: #0056b3;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="password"],
-        input[type="date"],
-        textarea {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button.danger {
-            background-color: #dc3545;
-        }
-        button.danger:hover {
-            background-color: #c82333;
-        }
-        button.success {
-            background-color: #28a745;
-        }
-        button.success:hover {
-            background-color: #218838;
-        }
-        #lista-eventos {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .evento {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-        }
-        .evento h2 {
-            margin-top: 0;
-            color: #0056b3;
-        }
-        .evento p {
-            margin-bottom: 5px;
-        }
-        .evento .acoes {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-        #auth-status {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #e2f0fb;
-            border-left: 5px solid #007bff;
-            color: #007bff;
-        }
-        .error-message {
-            color: #dc3545;
-            margin-bottom: 10px;
-        }
-    </style>
+    <title>Jiromso Eventos - Sistema Profissional</title>
+
+    <link rel="stylesheet" href="styles.css">
+
 </head>
+
 <body>
 
+    <header>
+        <h1>Jiromso Eventos</h1>
+    </header>
+
     <div class="container">
-        <h1>Jiromso Eventos - Frontend</h1>
-        <p>Gerencie seus eventos de forma eficiente.</p>
 
-        <div id="auth-status">
-            Você não está logado.
+        <div id="auth-screen" class="card">
+            <h2 id="auth-title">Acesso ao Sistema</h2>
+
+            <label for="auth-nome" id="lbl-nome" style="display: none;">Nome Completo</label>
+            <input type="text" id="auth-nome" placeholder="Ex: João Silva" style="display: none;">
+
+            <label for="auth-email">E-mail</label>
+            <input type="email" id="auth-email" placeholder="Ex: usuario@email.com">
+
+            <label for="auth-senha">Senha</label>
+            <input type="password" id="auth-senha" placeholder="••••••••">
+
+            <div id="role-select" style="display: none;">
+                <label>Perfil de Acesso:</label>
+                <select id="auth-role">
+                    <option value="user">Usuário Comum</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+
+            <div id="auth-msg-box"></div>
+
+            <button class="btn-primary" onclick="login()" id="btn-login">ENTRAR</button>
+            <button class="btn-secondary" onclick="cadastro()" id="btn-cadastro"
+                style="display: none;">CADASTRAR</button>
+
+            <p class="link-toggle" onclick="toggleAuthMode()">
+                <span id="toggle-text">Não possui conta? Cadastre-se aqui</span>
+            </p>
         </div>
 
-        <div class="auth-section">
-            <h2 id="auth-title">Faça Login ou Cadastre-se</h2>
-            <div id="auth-error" class="error-message"></div>
-            <input type="text" id="auth-nome" placeholder="Seu Nome (apenas para cadastro)">
-            <input type="email" id="auth-email" placeholder="Seu Email" required>
-            <input type="password" id="auth-senha" placeholder="Sua Senha" required>
-            <button onclick="fazerLogin()">Login</button>
-            <button onclick="fazerCadastro()">Cadastrar</button>
-            <button class="danger" onclick="fazerLogout()" style="display: none;" id="logout-button">Logout</button>
-        </div>
+        <div id="app-screen" style="display: none;">
 
-        <div class="event-form-section" style="display: none;" id="event-management-section">
-            <h2>Gerenciar Eventos</h2>
-            <div id="event-form-error" class="error-message"></div>
-            <input type="text" id="event-id" style="display: none;">
-            <input type="text" id="event-nome" placeholder="Nome do Evento" required>
-            <input type="date" id="event-data" placeholder="Data (AAAA-MM-DD)" required>
-            <input type="text" id="event-localizacao" placeholder="Localização" required>
-            <textarea id="event-descricao" placeholder="Descrição (opcional)"></textarea>
-            <button onclick="salvarEvento()" id="save-event-button">Criar Evento</button>
-            <button onclick="cancelarEdicao()" id="cancel-edit-button" style="display: none;">Cancelar Edição</button>
-        </div>
+            <div class="card"
+                style="display: flex; justify-content: space-between; align-items: center; background-color: #fdfdfd;">
+                <div>
+                    <small>Bem-vindo(a),</small><br>
+                    <strong id="user-display" style="font-size: 1.2rem;"></strong>
+                    <span id="role-badge" class="badge"></span>
+                </div>
+                <button class="btn-outline" onclick="logout()" style="width: auto;">SAIR</button>
+            </div>
 
-        <h2>Lista de Eventos</h2>
-        <div id="lista-eventos">
-            <p>Carregando eventos...</p>
+            <div class="card">
+                <h2 id="form-title">Novo Evento</h2>
+                <input type="hidden" id="ev-id">
+
+                <label>Nome do Evento *</label>
+                <input type="text" id="ev-nome" placeholder="Ex: Palestra de Tecnologia">
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1;">
+                        <label>Data *</label>
+                        <input type="date" id="ev-data">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Localização *</label>
+                        <input type="text" id="ev-local" placeholder="Ex: Auditório Principal">
+                    </div>
+                </div>
+
+                <label>Participantes</label>
+                <input type="text" id="ev-parts" placeholder="Ex: João, Maria, Pedro...">
+
+                <label>Descrição Detalhada</label>
+                <textarea id="ev-desc" rows="3" placeholder="Detalhes sobre o evento..."></textarea>
+
+                <div id="ev-msg-box"></div>
+
+                <div class="actions" style="border: none; padding: 0;">
+                    <button class="btn-primary" onclick="salvarEvento()" id="btn-salvar">CRIAR EVENTO</button>
+                    <button class="btn-outline" onclick="limparForm()" id="btn-cancel"
+                        style="display: none;">CANCELAR</button>
+                </div>
+            </div>
+
+            <h2 style="color: var(--grena); margin-bottom: 20px;">Eventos Agendados</h2>
+            <div id="lista-eventos">
+                <p style="text-align: center; color: #777;">Carregando eventos...</p>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = '/api'; 
-        const AUTH_TOKEN_KEY = 'authToken'; 
+        const API = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let isLoginMode = true;
 
-        let currentAuthToken = localStorage.getItem(AUTH_TOKEN_KEY); // Tenta carregar token ao iniciar
+        // --- UTILITÁRIOS ---
 
-        // --- Funções de Utilitário ---
-        function getAuthHeaders() {
-            if (currentAuthToken) {
-                return {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentAuthToken}`
-                };
-            }
-            return { 'Content-Type': 'application/json' };
+        function mostrarMsg(idBox, texto, tipo) {
+            const box = document.getElementById(idBox);
+            box.innerText = texto;
+            box.className = 'msg-box ' + (tipo === 'erro' ? 'msg-erro' : 'msg-sucesso');
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 5000);
         }
 
-        function displayMessage(elementId, message, isError = false) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.style.color = isError ? '#dc3545' : '#28a745';
-            setTimeout(() => element.textContent = '', 5000); // Limpa a msg dps de 5s
+        function validarEmail(email) {
+            const re = /\S+@\S+\.\S+/;
+            return re.test(email);
         }
 
-        // --- Gerenciamento de Autenticação ---
-        function updateAuthUI() {
-            const authStatusDiv = document.getElementById('auth-status');
-            const authTitle = document.getElementById('auth-title');
-            const authNomeInput = document.getElementById('auth-nome');
-            const logoutButton = document.getElementById('logout-button');
-            const eventManagementSection = document.getElementById('event-management-section');
+        function formatarDataBR(dataISO) {
+            if (!dataISO) return "Data não definida";
+            const partes = dataISO.split('-');
+            if (partes.length !== 3) return dataISO;
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
 
-            if (currentAuthToken) {
-                authStatusDiv.innerHTML = `Você está logado. <button class="danger" onclick="fazerLogout()">Logout</button>`;
-                authTitle.textContent = 'Você está logado!';
-                authNomeInput.style.display = 'none'; // Nome não é necessário após login
-                logoutButton.style.display = 'inline-block';
-                eventManagementSection.style.display = 'block'; // Mostra gestão de eventos
+        // --- INTERFACE ---
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            const elements = {
+                nome: document.getElementById('auth-nome'),
+                lblNome: document.getElementById('lbl-nome'),
+                role: document.getElementById('role-select'),
+                btnLogin: document.getElementById('btn-login'),
+                btnCadastro: document.getElementById('btn-cadastro'),
+                txt: document.getElementById('toggle-text'),
+                title: document.getElementById('auth-title')
+            };
+
+            if (isLoginMode) {
+                elements.nome.style.display = 'none';
+                elements.lblNome.style.display = 'none';
+                elements.role.style.display = 'none';
+                elements.btnLogin.style.display = 'block';
+                elements.btnCadastro.style.display = 'none';
+                elements.txt.innerText = 'Não possui conta? Cadastre-se aqui';
+                elements.title.innerText = 'Acesso ao Sistema';
             } else {
-                authStatusDiv.textContent = 'Você não está logado.';
-                authTitle.textContent = 'Faça Login ou Cadastre-se';
-                authNomeInput.style.display = 'block';
-                logoutButton.style.display = 'none';
-                eventManagementSection.style.display = 'none'; // Esconde gestão de eventos
+                elements.nome.style.display = 'block';
+                elements.lblNome.style.display = 'block';
+                elements.role.style.display = 'block';
+                elements.btnLogin.style.display = 'none';
+                elements.btnCadastro.style.display = 'block';
+                elements.txt.innerText = 'Já possui conta? Faça Login';
+                elements.title.innerText = 'Criar Nova Conta';
             }
-            carregarEventos(); // Recarrega eventos para mostrar/esconder botões de edição
+            document.getElementById('auth-msg-box').style.display = 'none';
         }
 
-        async function fazerLogin() {
-            const email = document.getElementById('auth-email').value;
-            const senha = document.getElementById('auth-senha').value;
-            const authErrorDiv = document.getElementById('auth-error');
-            authErrorDiv.textContent = ''; // Limpa erros anteriores
-
-            if (!email || !senha) {
-                authErrorDiv.textContent = 'Email e senha são obrigatórios para login.';
+        function checkAuth() {
+            if (!token || token === "undefined" || token === "null") {
+                document.getElementById('auth-screen').style.display = 'block';
+                document.getElementById('app-screen').style.display = 'none';
                 return;
             }
 
             try {
-                const response = await fetch(`${API_URL}/usuarios/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                currentUser = payload;
+
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'block';
+                document.getElementById('user-display').innerText = currentUser.nome;
+
+                const badge = document.getElementById('role-badge');
+                const roleText = currentUser.role === 'admin' ? 'ADMINISTRADOR' : 'COLABORADOR';
+                badge.innerText = roleText;
+                badge.className = `badge badge-${currentUser.role || 'user'}`;
+
+                carregarEventos();
+            } catch (e) {
+                logout();
+            }
+        }
+
+        // --- API CALLS ---
+
+        async function login() {
+            const email = document.getElementById('auth-email').value.trim();
+            const senha = document.getElementById('auth-senha').value;
+
+            if (!email || !senha) return mostrarMsg('auth-msg-box', 'Preencha E-mail e Senha.', 'erro');
+            if (!validarEmail(email)) return mostrarMsg('auth-msg-box', 'Insira um e-mail válido (com @).', 'erro');
+
+            try {
+                const res = await fetch(API + '/usuarios/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, senha })
                 });
+                const data = await res.json();
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Erro ao fazer login.');
+                if (res.ok) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    checkAuth();
+                } else {
+                    mostrarMsg('auth-msg-box', data.message, 'erro');
                 }
-
-                const data = await response.json();
-                currentAuthToken = data.token;
-                localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-                updateAuthUI();
-                displayMessage('auth-error', 'Login bem-sucedido!', false);
-                document.getElementById('auth-email').value = ''; // Limpa campos
-                document.getElementById('auth-senha').value = '';
-                document.getElementById('auth-nome').value = '';
-            } catch (error) {
-                authErrorDiv.textContent = error.message;
-                console.error('Erro de login:', error);
+            } catch (err) {
+                mostrarMsg('auth-msg-box', 'Erro de conexão com o servidor.', 'erro');
             }
         }
 
-        async function fazerCadastro() {
-            const nome = document.getElementById('auth-nome').value;
-            const email = document.getElementById('auth-email').value;
+        async function cadastro() {
+            const nome = document.getElementById('auth-nome').value.trim();
+            const email = document.getElementById('auth-email').value.trim();
             const senha = document.getElementById('auth-senha').value;
-            const authErrorDiv = document.getElementById('auth-error');
-            authErrorDiv.textContent = ''; // Limpa erros anteriores
+            const role = document.getElementById('auth-role').value;
 
-            if (!nome || !email || !senha) {
-                authErrorDiv.textContent = 'Nome, email e senha são obrigatórios para cadastro.';
-                return;
-            }
+            if (!nome || !email || !senha) return mostrarMsg('auth-msg-box', 'Todos os campos são obrigatórios.', 'erro');
+            if (!validarEmail(email)) return mostrarMsg('auth-msg-box', 'E-mail inválido.', 'erro');
+            if (senha.length < 4) return mostrarMsg('auth-msg-box', 'A senha deve ter no mínimo 4 caracteres.', 'erro');
 
             try {
-                const response = await fetch(`${API_URL}/usuarios`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome, email, senha })
+                const res = await fetch(API + '/usuarios', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, senha, role })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('Cadastro realizado com sucesso!');
+                    toggleAuthMode();
+                } else {
+                    mostrarMsg('auth-msg-box', data.message, 'erro');
+                }
+            } catch (err) {
+                mostrarMsg('auth-msg-box', 'Erro de conexão.', 'erro');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            location.reload();
+        }
+
+        async function carregarEventos() {
+            if (!token) return;
+            try {
+                const res = await fetch(API + '/eventos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Erro ao cadastrar usuário.');
-                }
+                if (res.status === 403 || res.status === 401) { logout(); return; }
 
-                displayMessage('auth-error', 'Cadastro realizado com sucesso! Agora faça login.', false);
-                // Após o cadastro, o usuário deve fazer login
-                document.getElementById('auth-nome').value = '';
-                document.getElementById('auth-email').value = email; // Preenche email para login
-                document.getElementById('auth-senha').value = '';
-            } catch (error) {
-                authErrorDiv.textContent = error.message;
-                console.error('Erro de cadastro:', error);
-            }
-        }
+                const eventos = await res.json();
+                const lista = document.getElementById('lista-eventos');
+                lista.innerHTML = '';
 
-        function fazerLogout() {
-            currentAuthToken = null;
-            localStorage.removeItem(AUTH_TOKEN_KEY);
-            updateAuthUI();
-            displayMessage('auth-status', 'Logout realizado com sucesso!', false);
-        }
+                if (eventos.length === 0) lista.innerHTML = '<p style="text-align:center; padding: 20px;">Nenhum evento encontrado.</p>';
 
-        // --- Gerenciamento de Eventos (CRUD) ---
-        async function carregarEventos() {
-            const listaDiv = document.getElementById('lista-eventos');
-            listaDiv.innerHTML = '<p>Carregando eventos...</p>';
-            
-            try {
-                const response = await fetch(`${API_URL}/eventos`);
-                if (!response.ok) {
-                    throw new Error(`Erro na API: ${response.statusText}`);
-                }
-                const eventos = await response.json();
-                
-                listaDiv.innerHTML = '';
-                if (eventos.length === 0) {
-                    listaDiv.innerHTML = '<p>Nenhum evento cadastrado no momento.</p>';
-                    return;
-                }
-                
-                eventos.forEach(evento => {
-                    const eventoDiv = document.createElement('div');
-                    eventoDiv.className = 'evento';
-                    
-                    let acoesHtml = '';
-                    if (currentAuthToken) { // Só mostra botões se estiver logado
-                        acoesHtml = `
-                            <div class="acoes">
-                                <button class="success" onclick="editarEvento(${evento.id})">Editar</button>
-                                <button class="danger" onclick="deletarEvento(${evento.id})">Deletar</button>
+                eventos.forEach(ev => {
+                    const div = document.createElement('div');
+                    div.className = 'evento-item';
+
+                    const isOwner = ev.organizador_id === currentUser.id;
+                    const isAdmin = currentUser.role === 'admin';
+
+                    let buttons = '';
+                    if (isAdmin || isOwner) {
+                        buttons = `
+                            <div class="actions">
+                                <button class="btn-secondary" onclick='preencherEdit(${JSON.stringify(ev)})'>EDITAR</button>
+                                <button class="btn-outline" onclick="deletar(${ev.id})">DELETAR</button>
                             </div>
                         `;
                     }
 
-                    eventoDiv.innerHTML = `
-                        <h2>${evento.nome} (ID: ${evento.id})</h2>
-                        <p><strong>Data:</strong> ${evento.data}</p>
-                        <p><strong>Local:</strong> ${evento.localizacao}</p>
-                        <p><strong>Descrição:</strong> ${evento.descricao || 'N/A'}</p>
-                        ${acoesHtml}
+                    div.innerHTML = `
+                        <div class="evento-header">
+                            <h3>${ev.nome}</h3>
+                            <span class="evento-date">📅 ${formatarDataBR(ev.data)}</span>
+                        </div>
+                        <p><strong>📍 Local:</strong> ${ev.localizacao}</p>
+                        <p><strong>👥 Participantes:</strong> ${ev.participantes || 'Nenhum definido'}</p>
+                        <p style="margin-top: 10px; font-style: italic;">${ev.descricao || ''}</p>
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 10px; border-top: 1px dashed #eee; padding-top:5px;">
+                            ID Evento: ${ev.id} | ID Organizador: ${ev.organizador_id}
+                        </div>
+                        ${buttons}
                     `;
-                    
-                    listaDiv.appendChild(eventoDiv);
+                    lista.appendChild(div);
                 });
-
-            } catch (error) {
-                console.error('Falha ao carregar eventos:', error);
-                listaDiv.innerHTML = `<p style="color: red;">Erro ao carregar eventos. Verifique se o servidor backend está rodando em ${API_URL}.</p>`;
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function salvarEvento() {
-            const eventId = document.getElementById('event-id').value;
-            const nome = document.getElementById('event-nome').value;
-            const data = document.getElementById('event-data').value;
-            const localizacao = document.getElementById('event-localizacao').value;
-            const descricao = document.getElementById('event-descricao').value;
-            const eventFormErrorDiv = document.getElementById('event-form-error');
-            eventFormErrorDiv.textContent = '';
+            const id = document.getElementById('ev-id').value;
+            const nome = document.getElementById('ev-nome').value.trim();
+            const data = document.getElementById('ev-data').value;
+            const local = document.getElementById('ev-local').value.trim();
+            const parts = document.getElementById('ev-parts').value;
+            const desc = document.getElementById('ev-desc').value;
 
-            if (!nome || !data || !localizacao) {
-                eventFormErrorDiv.textContent = 'Nome, Data e Localização são obrigatórios.';
-                return;
-            }
-            if (!currentAuthToken) {
-                eventFormErrorDiv.textContent = 'Você precisa estar logado para gerenciar eventos.';
-                return;
-            }
+            if (!nome) return mostrarMsg('ev-msg-box', 'O nome do evento é obrigatório.', 'erro');
+            if (!data) return mostrarMsg('ev-msg-box', 'Selecione uma data no calendário.', 'erro');
+            if (!local) return mostrarMsg('ev-msg-box', 'Informe a localização.', 'erro');
 
-            const method = eventId ? 'PUT' : 'POST';
-            const url = eventId ? `${API_URL}/eventos/${eventId}` : `${API_URL}/eventos`;
+            const body = JSON.stringify({
+                nome: nome,
+                data: data,
+                localizacao: local,
+                participantes: parts,
+                descricao: desc
+            });
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API}/eventos/${id}` : `${API}/eventos`;
 
             try {
-                const response = await fetch(url, {
+                const res = await fetch(url, {
                     method: method,
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ nome, data, localizacao, descricao })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: body
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Erro ao ${eventId ? 'atualizar' : 'criar'} evento.`);
+                if (res.ok) {
+                    mostrarMsg('ev-msg-box', `Evento ${id ? 'atualizado' : 'criado'} com sucesso!`, 'sucesso');
+                    limparForm();
+                    carregarEventos();
+                } else {
+                    const d = await res.json();
+                    mostrarMsg('ev-msg-box', d.message, 'erro');
                 }
-
-                displayMessage('event-form-error', `Evento ${eventId ? 'atualizado' : 'criado'} com sucesso!`, false);
-                limparFormularioEventos();
-                carregarEventos(); // Recarrega a lista
-                document.getElementById('save-event-button').textContent = 'Criar Evento';
-                document.getElementById('cancel-edit-button').style.display = 'none';
-            } catch (error) {
-                eventFormErrorDiv.textContent = error.message;
-                console.error('Erro ao salvar evento:', error);
-            }
+            } catch (e) { mostrarMsg('ev-msg-box', 'Erro ao salvar.', 'erro'); }
         }
 
-        async function editarEvento(id) {
-            if (!currentAuthToken) return; // Não faz nada se não estiver logado
-
-            try {
-                const response = await fetch(`${API_URL}/eventos/${id}`);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Erro ao buscar evento para edição.');
-                }
-                const evento = await response.json();
-                
-                // Preenche o formulário com os dados do evento
-                document.getElementById('event-id').value = evento.id;
-                document.getElementById('event-nome').value = evento.nome;
-                document.getElementById('event-data').value = evento.data;
-                document.getElementById('event-localizacao').value = evento.localizacao;
-                document.getElementById('event-descricao').value = evento.descricao || '';
-                
-                document.getElementById('save-event-button').textContent = 'Atualizar Evento';
-                document.getElementById('cancel-edit-button').style.display = 'inline-block';
-                window.scrollTo(0, document.getElementById('event-management-section').offsetTop); // Scroll para o form
-            } catch (error) {
-                displayMessage('event-form-error', error.message, true);
-                console.error('Erro ao buscar evento para edição:', error);
-            }
+        async function deletar(id) {
+            if (!confirm('Tem certeza que deseja remover este evento permanentemente?')) return;
+            const res = await fetch(`${API}/eventos/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) carregarEventos();
+            else alert('Erro ao deletar. Verifique suas permissões.');
         }
 
-        async function deletarEvento(id) {
-            if (!currentAuthToken || !confirm('Tem certeza que deseja deletar este evento?')) return;
+        function preencherEdit(ev) {
+            document.getElementById('form-title').innerText = "Editar Evento #" + ev.id;
+            document.getElementById('ev-id').value = ev.id;
+            document.getElementById('ev-nome').value = ev.nome;
+            document.getElementById('ev-data').value = ev.data;
+            document.getElementById('ev-local').value = ev.localizacao;
+            document.getElementById('ev-parts').value = ev.participantes || '';
+            document.getElementById('ev-desc').value = ev.descricao || '';
 
-            try {
-                const response = await fetch(`${API_URL}/eventos/${id}`, {
-                    method: 'DELETE',
-                    headers: getAuthHeaders()
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Erro ao deletar evento.');
-                }
-
-                displayMessage('event-form-error', 'Evento deletado com sucesso!', false);
-                carregarEventos(); // Recarrega a lista
-            } catch (error) {
-                displayMessage('event-form-error', error.message, true);
-                console.error('Erro ao deletar evento:', error);
-            }
+            document.getElementById('btn-salvar').innerText = "SALVAR ALTERAÇÕES";
+            document.getElementById('btn-cancel').style.display = 'inline-block';
+            document.getElementById('app-screen').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function limparFormularioEventos() {
-            document.getElementById('event-id').value = '';
-            document.getElementById('event-nome').value = '';
-            document.getElementById('event-data').value = '';
-            document.getElementById('event-localizacao').value = '';
-            document.getElementById('event-descricao').value = '';
+        function limparForm() {
+            document.getElementById('form-title').innerText = "Novo Evento";
+            document.getElementById('ev-id').value = '';
+            document.getElementById('ev-nome').value = '';
+            document.getElementById('ev-data').value = '';
+            document.getElementById('ev-local').value = '';
+            document.getElementById('ev-parts').value = '';
+            document.getElementById('ev-desc').value = '';
+
+            document.getElementById('btn-salvar').innerText = "CRIAR EVENTO";
+            document.getElementById('btn-cancel').style.display = 'none';
+            document.getElementById('ev-msg-box').style.display = 'none';
         }
 
-        function cancelarEdicao() {
-            limparFormularioEventos();
-            document.getElementById('save-event-button').textContent = 'Criar Evento';
-            document.getElementById('cancel-edit-button').style.display = 'none';
-        }
-
-        // --- Inicialização ---
-        document.addEventListener('DOMContentLoaded', () => {
-            updateAuthUI(); // Atualiza a UI baseada no token existente
-            carregarEventos();
-        });
+        checkAuth();
     </script>
-
 </body>
+
 </html>

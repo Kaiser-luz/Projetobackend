@@ -1,7 +1,6 @@
-const db = require('../../database.js'); // Importa a conexão do banco
+const db = require('../../database.js');
 
 const eventoModel = {
-    // Método para buscar todos os eventos
     findAll: () => {
         return new Promise((resolve, reject) => {
             db.all("SELECT * FROM eventos", [], (err, rows) => {
@@ -11,7 +10,6 @@ const eventoModel = {
         });
     },
 
-    // Método para buscar um evento por ID
     findById: (id) => {
         return new Promise((resolve, reject) => {
             db.get("SELECT * FROM eventos WHERE id = ?", [id], (err, row) => {
@@ -21,33 +19,36 @@ const eventoModel = {
         });
     },
 
-    // Método para criar um novo evento
     create: (evento) => {
-        const { nome, data, localizacao, descricao } = evento;
+        const { nome, data, localizacao, descricao, participantes, organizador_id } = evento;
         return new Promise((resolve, reject) => {
-            db.run("INSERT INTO eventos (nome, data, localizacao, descricao) VALUES (?, ?, ?, ?)",
-                   [nome, data, localizacao, descricao], function (err) {
-                if (err) reject(err);
-                resolve({ id: this.lastID, ...evento });
-            });
+            db.run(
+                "INSERT INTO eventos (nome, data, localizacao, descricao, participantes, organizador_id) VALUES (?, ?, ?, ?, ?, ?)",
+                [nome, data, localizacao, descricao, participantes, organizador_id],
+                function (err) {
+                    if (err) reject(err);
+                    resolve({ id: this.lastID, ...evento });
+                }
+            );
         });
     },
 
-    // Método para atualizar um evento
     update: (id, evento) => {
-        const { nome, data, localizacao, descricao } = evento;
+        const { nome, data, localizacao, descricao, participantes } = evento;
         return new Promise((resolve, reject) => {
-            db.run(`UPDATE eventos 
-                       SET nome = ?, data = ?, localizacao = ?, descricao = ?
-                     WHERE id = ?`,
-                     [nome, data, localizacao, descricao, id], function (err) {
-                if (err) reject(err);
-                resolve({ changes: this.changes });
-            });
+            db.run(
+                `UPDATE eventos 
+                 SET nome = ?, data = ?, localizacao = ?, descricao = ?, participantes = ?
+                 WHERE id = ?`,
+                [nome, data, localizacao, descricao, participantes, id],
+                function (err) {
+                    if (err) reject(err);
+                    resolve({ changes: this.changes });
+                }
+            );
         });
     },
 
-    // Método para deletar um evento
     delete: (id) => {
         return new Promise((resolve, reject) => {
             db.run("DELETE FROM eventos WHERE id = ?", [id], function (err) {

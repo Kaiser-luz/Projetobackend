@@ -1,87 +1,76 @@
 const eventoModel = require('../models/eventoModel');
 
-// LISTAR TODOS (GET)
 exports.listarTodos = async (req, res) => {
   try {
     const eventos = await eventoModel.findAll();
     res.json(eventos);
-  } catch (err) {
-    res.status(500).json({ message: "Erro no servidor ao buscar eventos." });
-  }
+  } catch (err) { res.status(500).json({ message: "Erro." }); }
 };
 
-// BUSCAR POR ID (GET)
 exports.buscarPorId = async (req, res) => {
-  const id = parseInt(req.params.id);
   try {
-    const evento = await eventoModel.findById(id);
-    if (evento) {
-      res.json(evento);
-    } else {
-      res.status(404).json({ message: 'Evento não encontrado.' });
-    }
-  } catch (err) {
-    res.status(500).json({ message: "Erro no servidor." });
-  }
+    const evento = await eventoModel.findById(req.params.id);
+    if (evento) res.json(evento);
+    else res.status(404).json({ message: "Não encontrado" });
+  } catch (err) { res.status(500).json({ message: "Erro." }); }
 };
 
-// CRIAR (POST)
 exports.criar = async (req, res) => {
-  const { nome, data, localizacao, descricao } = req.body;
-  if (!nome || !data || !localizacao) {
-    return res.status(400).json({ message: 'Nome, data e localização são obrigatórios.' });
-  }
+  const { nome, data, localizacao, descricao, participantes } = req.body;
+  const organizador_id = req.usuario.id;
+
+  if (!nome || !data || !localizacao) return res.status(400).json({ message: 'Dados incompletos.' });
 
   try {
-    const novoEvento = await eventoModel.create({ nome, data, localizacao, descricao });
-    res.status(201).json(novoEvento);
-  } catch (err) {
-    res.status(500).json({ message: "Erro no servidor ao criar evento." });
-  }
+    const novo = await eventoModel.create({ nome, data, localizacao, descricao, participantes, organizador_id });
+    res.status(201).json(novo);
+  } catch (err) { res.status(500).json({ message: "Erro ao criar." }); }
 };
 
-// ATUALIZAR (PUT)
+
 exports.atualizar = async (req, res) => {
   const id = parseInt(req.params.id);
-  const { nome, data, localizacao, descricao } = req.body;
+  const { nome, data, localizacao, descricao, participantes } = req.body;
 
-  // Lógica para buscar o evento atual e mesclar os dados
+  const usuarioId = req.usuario.id;
+  const usuarioRole = req.usuario.role;
+
   try {
-    const eventoAtual = await eventoModel.findById(id);
-    if (!eventoAtual) {
-      return res.status(404).json({ message: 'Evento não encontrado para atualização.' });
+    const evento = await eventoModel.findById(id);
+    if (!evento) return res.status(404).json({ message: 'Não encontrado.' });
+
+    if (usuarioRole !== 'admin' && evento.organizador_id !== usuarioId) {
+      return res.status(403).json({ message: 'Acesso negado.' });
     }
 
-    // Mescla dados: usa o novo valor se fornecido, senão mantém o antigo
-    const dadosAtualizados = {
-      nome: nome || eventoAtual.nome,
-      data: data || eventoAtual.data,
-      localizacao: localizacao || eventoAtual.localizacao,
-      descricao: descricao !== undefined ? descricao : eventoAtual.descricao
+    const dados = {
+      nome: nome || evento.nome,
+      data: data || evento.data,
+      localizacao: localizacao || evento.localizacao,
+      descricao: descricao !== undefined ? descricao : evento.descricao,
+      participantes: participantes !== undefined ? participantes : evento.participantes
     };
 
-    const result = await eventoModel.update(id, dadosAtualizados);
-    if (result.changes > 0) {
-      res.json({ id, ...dadosAtualizados });
-    } else {
-      res.status(404).json({ message: 'Evento não encontrado para atualização.' });
-    }
-  } catch (err) {
-    res.status(500).json({ message: "Erro no servidor ao atualizar evento." });
-  }
+    await eventoModel.update(id, dados);
+    res.json({ id, ...dados });
+
+  } catch (err) { res.status(500).json({ message: "Erro." }); }
 };
 
-// DELETAR (DELETE)
 exports.deletar = async (req, res) => {
   const id = parseInt(req.params.id);
+  const usuarioId = req.usuario.id;
+  const usuarioRole = req.usuario.role;
+
   try {
-    const result = await eventoModel.delete(id);
-    if (result.changes > 0) {
-      res.status(204).send(); // Sucesso, sem conteúdo
-    } else {
-      res.status(404).json({ message: 'Evento não encontrado para exclusão.' });
+    const evento = await eventoModel.findById(id);
+    if (!evento) return res.status(404).json({ message: 'Não encontrado.' });
+
+    if (usuarioRole !== 'admin' && evento.organizador_id !== usuarioId) {
+      return res.status(403).json({ message: 'Acesso negado.' });
     }
-  } catch (err) {
-    res.status(500).json({ message: "Erro no servidor ao deletar evento." });
-  }
+
+    await eventoModel.delete(id);
+    res.status(204).send();
+  } catch (err) { res.status(500).json({ message: "Erro." }); }
 };
