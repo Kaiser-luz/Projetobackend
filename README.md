@@ -56,8 +56,8 @@ Abra o terminal na pasta do projeto e execute:
 npm install
 ```
 3. Iniciar o SistemaPara rodar o servidor em modo de desenvolvimento:
-```Bash npm run dev
-```
+```Bash npm run dev```
+
 O terminal deverá exibir:Conectado ao banco de dados SQLite.
 Servidor rodando em http://localhost:3000
 4. Acessar
